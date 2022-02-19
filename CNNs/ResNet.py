@@ -3,26 +3,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class resnet_block(nn.Module):
-  def __init__(self, input_dim, output_dim, strides, proj= False):
+  def __init__(self, input_dim, output_dim, stride, proj= False):
+    '''proj = True only when the no. of channels double''' 
     super(resnet_block, self).__init__()
 
-    self.conv1= nn.Conv2d(input_dim, output_dim, kernel_size= 3, padding=1, stride= strides)
+    self.conv1= nn.Conv2d(input_dim, output_dim, kernel_size= 3, padding=1, stride= stride)
+    self.bn1= nn.BatchNorm2d(output_dim)
     self.conv2= nn.Conv2d(output_dim, output_dim, kernel_size= 3, padding= 1, stride= 1)
-
-    #proj = True only when the no. of channels double
+    self.bn2= nn.BatchNorm2d(output_dim)
+    
     if proj:
-      self.conv3= nn.Conv2d(input_dim, output_dim, kernel_size= 1, padding= 0, stride= strides)
+      self.conv3= nn.Conv2d(input_dim, output_dim, kernel_size= 1, stride= stride)
+      self.bn3= nn.BatchNorm2d(output_dim)
     else:
       self.conv3= None
-    
-    self.bn= nn.BatchNorm2d(output_dim)
 
   def forward(self, x):
-    out= F.relu(self.bn(self.conv1(x)))
-    out= self.bn(self.conv2(out))
+    out= F.relu(self.bn1(self.conv1(x)))
+    out= self.bn2(self.conv2(out))
 
     if self.conv3:
-      x= self.bn(self.conv3(x))
+      x= self.bn3(self.conv3(x))
     
     out += x
     out= F.relu(out)
@@ -30,27 +31,31 @@ class resnet_block(nn.Module):
 
     
 class bottleneck_block(nn.Module):
-  def __init__(self, input_dim, intermediate_dim, output_dim, strides, proj= False):
+  def __init__(self, input_dim, intermediate_dim, output_dim, stride, proj= False):
     super(bottleneck_block, self).__init__()
-    self.conv1= nn.Conv2d(input_dim, intermediate_dim, kernel_size= 1, padding= 0, stride= strides)
+    self.conv1= nn.Conv2d(input_dim, intermediate_dim, kernel_size= 1, stride= stride)
+    self.bn1= nn.BatchNorm2d(intermediate_dim)
+    
     self.conv2= nn.Conv2d(intermediate_dim, intermediate_dim, kernel_size= 3, padding= 1, stride= 1)
-    self.conv3= nn.Conv2d(intermediate_dim, output_dim, kernel_size= 1, padding= 0, stride=1)
+    self.bn2= nn.BatchNorm2d(intermediate_dim)
+    
+    self.conv3= nn.Conv2d(intermediate_dim, output_dim, kernel_size= 1, stride=1)
+    self.bn3= nn.BatchNorm2d(output_dim)
 
     if proj:
-      self.conv4= nn.Conv2d(input_dim, output_dim, kernel_size= 1, padding=0, stride= strides)
+      self.conv4= nn.Conv2d(input_dim, output_dim, kernel_size= 1, stride= stride)
+      self.bn4= nn.BatchNorm2d(output_dim)
     else:
       self.conv4= None
 
-    self.bn1= nn.BatchNorm2d(intermediate_dim)
-    self.bn2= nn.BatchNorm2d(output_dim)
 
   def forward(self, x):
     out= F.relu(self.bn1(self.conv1(x)))
-    out= F.relu(self.bn1(self.conv2(out)))
-    out= self.bn2(self.conv3(out))
+    out= F.relu(self.bn2(self.conv2(out)))
+    out= self.bn3(self.conv3(out))
 
     if self.conv4:
-      x= self.bn2(self.conv4(x))
+      x= self.bn4(self.conv4(x))
     
     out += x
     out= F.relu(out)
@@ -71,16 +76,16 @@ def make_block(input_dim, output_dim, num_blocks, intermediate_dim= 0, bottlenec
       if i==0 and first_block:
         if input_dim== 64:
           #no. of channels double but no downsampling in the first block in resnet50
-          layers.append(bottleneck_block(input_dim, intermediate_dim, output_dim, strides= 1, proj= True)) 
+          layers.append(bottleneck_block(input_dim, intermediate_dim, output_dim, stride= 1, proj= True)) 
         else:
-          layers.append(bottleneck_block(input_dim, intermediate_dim, output_dim, strides= 2, proj= True))
+          layers.append(bottleneck_block(input_dim, intermediate_dim, output_dim, stride= 2, proj= True))
       else:
-        layers.append(bottleneck_block(output_dim, intermediate_dim, output_dim, strides= 1, proj= False))
+        layers.append(bottleneck_block(output_dim, intermediate_dim, output_dim, stride= 1, proj= False))
     else:
       if i== 0 and first_block:
-        layers.append(resnet_block(input_dim, output_dim, strides= 2, proj= True))
+        layers.append(resnet_block(input_dim, output_dim, stride= 2, proj= True))
       else:
-        layers.append(resnet_block(output_dim, output_dim, strides= 1, proj= False))
+        layers.append(resnet_block(output_dim, output_dim, stride= 1, proj= False))
   
   return layers
 
@@ -110,6 +115,7 @@ class ResNet34(nn.Module):
   def forward(self, x):
     x= self.features(x)
     x= self.blocks(x)
+    print(x.shape)
     x= self.classifier(x)
     return x
 
@@ -140,6 +146,7 @@ class ResNet50(nn.Module):
   def forward(self, x):
     x= self.features(x)
     x= self.blocks(x)
+    print(x.shape)
     x= self.classifier(x)
     return x
 
