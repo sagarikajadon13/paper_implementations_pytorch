@@ -89,7 +89,7 @@ class BottleneckSEResnetBlock(nn.Module):
 def make_block(input_dim, output_dim, num_blocks, intermediate_dim= 0, bottleneck= False, first_block= False):
   '''
   make blocks for both seresnet34 and seresnet50 
-  bottleneck= is True for resnet50
+  bottleneck= is True for seresnet50
   first_block= #channels double in the first block, set proj= True 
   '''
 
@@ -99,7 +99,7 @@ def make_block(input_dim, output_dim, num_blocks, intermediate_dim= 0, bottlenec
     if bottleneck:
       if i==0 and first_block:
         if input_dim== 64:
-          #no. of channels double but no downsampling in the first block in resnet50
+          #no. of channels double but no downsampling in the first block in seresnet50
           layers.append(BottleneckSEResnetBlock(input_dim, intermediate_dim, output_dim, stride= 1, proj= True)) 
         else:
           layers.append(BottleneckSEResnetBlock(input_dim, intermediate_dim, output_dim, stride= 2, proj= True))
