@@ -19,10 +19,10 @@ class BasicSEResnetBlock(nn.Module):
       self.conv3= None
       
     self.squeeze= nn.AdaptiveAvgPool2d((1, 1))
-    c= output_dim// reduction
-    self.excitation= nn.Sequential(nn.Linear(output_dim, c),
+    reduced_dim= output_dim// reduction
+    self.excitation= nn.Sequential(nn.Linear(output_dim, reduced_dim),
                                    nn.ReLU(inplace= True),
-                                   nn.Linear(c, output_dim),
+                                   nn.Linear(reduced_dim, output_dim),
                                    nn.Sigmoid())
     
     
@@ -62,10 +62,10 @@ class BottleneckSEResnetBlock(nn.Module):
       self.conv4= None
       
     self.squeeze= nn.AdaptiveAvgPool2d((1, 1))
-    c= output_dim// reduction
-    self.excitation= nn.Sequential(nn.Linear(output_dim, c),
+    reduced_dim= output_dim// reduction
+    self.excitation= nn.Sequential(nn.Linear(output_dim, reduced_dim),
                                    nn.ReLU(inplace= True),
-                                   nn.Linear(c, output_dim),
+                                   nn.Linear(reduced_dim, output_dim),
                                    nn.Sigmoid())
 
 
