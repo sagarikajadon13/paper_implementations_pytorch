@@ -48,13 +48,14 @@ class MobileNetV2(nn.Module):
                                   nn.BatchNorm2d(32),
                                   nn.ReLU6(inplace= True))
         
-        self.block0= InvertedLinearBottleneck(32, 16, 1, 1, residual= False)
+        #input_channels, output_channels, n_layers, expansion_ratio, stride
+        self.block0= BottleneckBlock(32, 16, 1, 1, 1)
         self.block1= BottleneckBlock(16, 24, 2, 6, 2)
         self.block2= BottleneckBlock(24, 32, 3, 6, 2)
         self.block3= BottleneckBlock(32, 64, 4, 6, 2)
         self.block4= BottleneckBlock(64, 96, 3, 6, 1)
         self.block5= BottleneckBlock(96, 160, 3, 6, 2)
-        self.block6= InvertedLinearBottleneck(160, 320, 6, 1, residual= False)
+        self.block6= BottleneckBlock(160, 320, 1, 6, 1)
         
         self.conv2= nn.Sequential(nn.Conv2d(320, 1280, kernel_size= 1),
                                   nn.BatchNorm2d(1280),
@@ -73,6 +74,7 @@ class MobileNetV2(nn.Module):
         x= self.block5(x)
         x= self.block6(x)
         x= self.conv2(x)
+        print(x.shape)
         x= self.pool(x)
         x= self.conv3(x)
         x= x.reshape(x.shape[0], -1)
