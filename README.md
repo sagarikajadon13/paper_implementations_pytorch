@@ -1,2 +1,2 @@
-# pytorch_image_classification
-pytorch implementations of several image classification models. 
+# Paper implementation in Pytorch
+Pytorch implementations of some deep learning architectures.
